@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Vision Buddy AI Glass</string>
+    <string name="home_subtitle">AI vision assistance for your everyday life</string>
+
+    <string name="btn_start_assist">Start Assistance</string>
+    <string name="btn_read_text">Read Text</string>
+    <string name="btn_detect_object">Detect Object</string>
+    <string name="btn_voice_command">Voice Command</string>
+    <string name="btn_sos">SOS</string>
+
+    <string name="status_initializing">Initializing…</string>
+    <string name="status_started">Assistant running. Point the camera ahead.</string>
+    <string name="btn_speak">Speak</string>
+    <string name="btn_mute">Voice: ON</string>
+    <string name="btn_unmute">Voice: OFF</string>
+    <string name="no_text_found">No text found</string>
+    <string name="no_object_found">Nothing detected</string>
+    <string name="camera_error">Camera error: %1$s</string>
+    <string name="permission_camera_denied">Camera permission is needed to assist you.</string>
+    <string name="permission_mic_denied">Microphone permission is needed for voice commands.</string>
+
+    <string name="voice_title">Voice Command</string>
+    <string name="voice_prompt">Say a command, for example:\n\"Read this\" · \"Detect object\" · \"Help\"</string>
+    <string name="voice_listening">Listening…</string>
+    <string name="voice_tap_to_speak">Tap the mic and speak</string>
+    <string name="voice_heard">Heard: %1$s</string>
+    <string name="voice_not_recognized">I did not understand. Say \"Read this\" or \"Detect object\".</string>
+    <string name="voice_no_service">Speech recognition is not available on this device.</string>
+    <string name="chip_read">Read this</string>
+    <string name="chip_detect">Detect object</string>
+    <string name="chip_sos">Help</string>
+
+    <string name="sos_title">SOS</string>
+    <string name="sos_press">Press and hold to send alert</string>
+    <string name="sos_placeholder">Emergency contacts, SMS and live location sharing arrive with Firebase in Phase 2.</string>
+    <string name="sos_call">Call 112</string>
+    <string name="sos_activated">SOS mode activated. Emergency services will be notified in the full version.</string>
+    <string name="sos_coming_soon">SOS feature will be fully connected with Firebase in Phase 2.</string>
+
+    <string name="detect_note">Detector ready. Point camera at objects.</string>
+    <string name="ocr_note">Reader ready. Point camera at text.</string>
+    <string name="assist_note">Assistance ready. Text and objects will be announced.</string>
+</resources>

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Buddy AI Glass — Web Interactive Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- TensorFlow.js & COCO-SSD for Real-Time Webcam Object Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+    <!-- Tesseract.js for Real-Time Webcam OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Status Bar -->
+        <header class="top-bar">
+            <div class="brand">
+                <i class="fa-solid fa-glasses brand-icon"></i>
+                <div class="brand-text">
+                    <h1>Vision Buddy</h1>
+                    <span class="badge">AI Glass v0.1.0 (Phase 1)</span>
+                </div>
+            </div>
+            <div class="status-pills">
+                <div class="pill" id="camPill">
+                    <i class="fa-solid fa-camera"></i> <span id="camPillText">Cam: Off</span>
+                </div>
+                <div class="pill active" id="ttsPill">
+                    <i class="fa-solid fa-volume-high"></i> <span id="ttsPillText">TTS: Ready</span>
+                </div>
+                <div class="pill" id="aiModelPill">
+                    <i class="fa-solid fa-brain"></i> <span id="aiModelText">AI: Loading...</span>
+                </div>
+                <button id="toggleThemeBtn" class="icon-btn" title="Toggle Sound/Mute">
+                    <i class="fa-solid fa-volume-high" id="muteIcon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Screen Viewport -->
+        <main class="viewport">
+            
+            <!-- HOME SCREEN -->
+            <section id="screen-home" class="screen active">
+                <div class="hero-card">
+                    <div class="hero-badge"><i class="fa-solid fa-eye"></i> On-Device AI Assistance</div>
+                    <h2>Vision Buddy AI Glass</h2>
+                    <p>Empowering visually impaired users through real-time camera vision & offline text-to-speech audio guidance.</p>
+                </div>
+
+                <div class="action-grid">
+                    <button class="action-card primary" data-navigate="assist">
+                        <div class="card-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <div class="card-info">
+                            <h3>Start Assistance</h3>
+                            <p>Continuous OCR text + YOLO object detection running together</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right arrow"></i>
+                    </button>
+
+                    <button class="action-card cyan" data-navigate="read">
+                        <div class="card-icon"><i class="fa-solid fa-book-open"></i></div>
+                        <div class="card-info">
+                            <h3>Read Text</h3>
+                            <p>Point camera at signs, documents or books to read aloud</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right arrow"></i>
+                    </button>
+
+                    <button class="action-card emerald" data-navigate="detect">
+                        <div class="card-icon"><i class="fa-solid fa-object-group"></i></div>
+                        <div class="card-info">
+                            <h3>Detect Object</h3>
+                            <p>YOLO AI model identifies objects & distance cues</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right arrow"></i>
+                    </button>
+
+                    <button class="action-card amber" data-navigate="voice">
+                        <div class="card-icon"><i class="fa-solid fa-microphone"></i></div>
+                        <div class="card-info">
+                            <h3>Voice Command</h3>
+                            <p>Hands-free voice triggers ("Read this", "Detect object", "Help")</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right arrow"></i>
+                    </button>
+
+                    <button class="action-card rose" data-navigate="sos">
+                        <div class="card-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+                        <div class="card-info">
+                            <h3>SOS Emergency</h3>
+                            <p>Immediate panic alert, location broadcast & sound alarm</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right arrow"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- CAMERA FUNCTIONAL SCREEN (ASSIST / READ / DETECT) -->
+            <section id="screen-camera" class="screen">
+                <div class="camera-header">
+                    <button class="back-btn" id="btnBackFromCam">
+                        <i class="fa-solid fa-arrow-left"></i> Home
+                    </button>
+
+                    <h2 id="camScreenTitle">Start Assistance</h2>
+
+                    <div class="mode-selector">
+                        <label><i class="fa-solid fa-sliders"></i> Input Feed:</label>
+                        <select id="sampleFeedSelect">
+                            <option value="webcam">📷 Live Webcam (Real AI Detection)</option>
+                            <option value="bus_stop" selected>🚌 Bus Stop & Route Sign</option>
+                            <option value="desk">💻 Office Workspace (Laptop, Mug, Phone)</option>
+                            <option value="store">☕ Coffee Shop Entrance & Opening Hours</option>
+                            <option value="street">🚦 City Crosswalk & Pedestrian Signal</option>
+                            <option value="book">📖 Book & Technical Document Page</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="camera-viewfinder">
+                    <video id="webcamVideo" autoplay playsinline muted class="hidden"></video>
+                    <canvas id="detectionCanvas"></canvas>
+
+                    <!-- Camera Overlay HUD -->
+                    <div class="hud-overlay">
+                        <div class="hud-top">
+                            <span class="live-tag" id="liveStatusTag"><span class="blink-dot"></span> AI RUNNING</span>
+                            <span class="fps-tag" id="fpsDisplay">30 FPS</span>
+                        </div>
+
+                        <!-- Target reticle -->
+                        <div class="reticle"></div>
+
+                        <div class="hud-bottom">
+                            <div class="spoken-bubble" id="spokenBubble">
+                                <i class="fa-solid fa-volume-high wave-icon"></i>
+                                <span id="spokenText">Initializing Vision Buddy engine...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls-panel">
+                    <button id="btnManualTrigger" class="ctrl-btn primary">
+                        <i class="fa-solid fa-bolt"></i> <span id="triggerBtnText">Announce Vision</span>
+                    </button>
+
+                    <button id="btnToggleSpeech" class="ctrl-btn secondary">
+                        <i class="fa-solid fa-volume-high" id="speechIcon"></i> Speak Again
+                    </button>
+
+                    <button id="btnToggleCamera" class="ctrl-btn outline">
+                        <i class="fa-solid fa-video"></i> Switch Feed
+                    </button>
+                </div>
+
+                <!-- Live Results Panel -->
+                <div class="results-card">
+                    <div class="results-header">
+                        <span><i class="fa-solid fa-list-check"></i> AI Perception Logs</span>
+                        <span class="mono-tag" id="modelTag">TF.js COCO-SSD + Tesseract OCR</span>
+                    </div>
+                    <div class="results-body">
+                        <div class="res-group">
+                            <label><i class="fa-solid fa-font"></i> OCR Detected Text:</label>
+                            <p id="resText" class="res-box">No text detected yet.</p>
+                        </div>
+                        <div class="res-group">
+                            <label><i class="fa-solid fa-cubes"></i> Detected Objects (YOLO / COCO):</label>
+                            <div id="resObjects" class="tags-box">
+                                <span class="tag-empty">Scanning scene...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Details & Statement Card -->
+                <div class="details-card">
+                    <div class="details-header">
+                        <span><i class="fa-solid fa-circle-info"></i> Sample Image Statements & Analysis</span>
+                        <span class="badge-blue" id="sampleTitleTag">Bus Stop Scene</span>
+                    </div>
+                    <div class="details-body">
+                        <div class="statement-box">
+                            <i class="fa-solid fa-quote-left quote-icon"></i>
+                            <p id="sampleStatementText">A bus stop sign is visible ahead displaying Route 42 to Downtown. 1 person and a bench are positioned nearby.</p>
+                        </div>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="d-label"><i class="fa-solid fa-eye"></i> Environment Context:</span>
+                                <span class="d-val" id="detailContext">Outdoor Transit Station</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="d-label"><i class="fa-solid fa-bullseye"></i> Key Target:</span>
+                                <span class="d-val" id="detailTarget">Bus Stop Sign (94% confidence)</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="d-label"><i class="fa-solid fa-shield"></i> Safety & Distance Guidance:</span>
+                                <span class="d-val" id="detailGuidance">Path clear. Bench 2 meters to the right.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VOICE COMMAND SCREEN -->
+            <section id="screen-voice" class="screen">
+                <div class="camera-header">
+                    <button class="back-btn" data-navigate="home">
+                        <i class="fa-solid fa-arrow-left"></i> Home
+                    </button>
+                    <h2>Voice Command Mode</h2>
+                </div>
+
+                <div class="voice-hero">
+                    <div class="mic-orb" id="micOrb">
+                        <i class="fa-solid fa-microphone"></i>
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring delay"></div>
+                    </div>
+                    <p class="mic-prompt" id="voicePromptText">Listening for speech commands...</p>
+                    <p class="voice-heard" id="voiceHeardText">"Say something..."</p>
+                </div>
+
+                <div class="command-suggestions">
+                    <h3>Try saying one of these commands:</h3>
+                    <div class="suggestions-grid">
+                        <button class="command-chip" data-cmd="Read this">
+                            <i class="fa-solid fa-book-open"></i> "Read this"
+                        </button>
+                        <button class="command-chip" data-cmd="Detect object">
+                            <i class="fa-solid fa-object-group"></i> "Detect object"
+                        </button>
+                        <button class="command-chip" data-cmd="Start assistance">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> "Start assistance"
+                        </button>
+                        <button class="command-chip" data-cmd="Help">
+                            <i class="fa-solid fa-circle-question"></i> "Help"
+                        </button>
+                        <button class="command-chip" data-cmd="SOS">
+                            <i class="fa-solid fa-triangle-exclamation"></i> "SOS"
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SOS SCREEN -->
+            <section id="screen-sos" class="screen">
+                <div class="camera-header">
+                    <button class="back-btn" data-navigate="home">
+                        <i class="fa-solid fa-arrow-left"></i> Home
+                    </button>
+                    <h2>Emergency SOS Alert</h2>
+                </div>
+
+                <div class="sos-container">
+                    <div class="sos-ring-card">
+                        <div class="sos-alarm-icon pulse-alarm">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h2>Emergency Alert System</h2>
+                        <p>Sends GPS coordinates & audio alert to trusted contacts (Phase 2 Integration ready)</p>
+                        
+                        <button id="btnTriggerSOS" class="sos-big-btn">
+                            <i class="fa-solid fa-bell"></i> TRIGGER SOS NOW
+                        </button>
+                    </div>
+
+                    <div class="sos-details-card">
+                        <h3><i class="fa-solid fa-location-dot"></i> Mock Telemetry</h3>
+                        <div class="telemetry-grid">
+                            <div class="t-item">
+                                <label>GPS Position</label>
+                                <span>13.0827° N, 80.2707° E</span>
+                            </div>
+                            <div class="t-item">
+                                <label>Battery Level</label>
+                                <span>94% (Charging)</span>
+                            </div>
+                            <div class="t-item">
+                                <label>Emergency Contact</label>
+                                <span>Guardian (+91 9876543210)</span>
+                            </div>
+                            <div class="t-item">
+                                <label>Alert Status</label>
+                                <span class="status-ready" id="sosStatusText">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer Info -->
+        <footer class="app-footer">
+            <span>Vision Buddy AI Glass • Live Webcam AI + Sample Analytics</span>
+            <span>Kotlin Android + Web Simulator</span>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
